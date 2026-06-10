@@ -1,0 +1,30 @@
+name: Test setup-cli action
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { label: stable,         os: ubuntu-latest, version: stable,     ref: "" }
+          - { label: active-lts,     os: ubuntu-latest, version: active-lts, ref: "" }
+          - { label: maint-lts,      os: ubuntu-latest, version: maint-lts,  ref: "" }
+          - { label: tag-regex,      os: ubuntu-latest, version: v1.6,       ref: "" }
+          - { label: build-main,     os: ubuntu-latest, version: stable,     ref: main }
+          - { label: build-main-win, os: windows-2022,  version: stable,     ref: main }
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: ziti
+        uses: ./setup-cli
+        with:
+          version: ${{ matrix.version }}
+          ref: ${{ matrix.ref }}
+      - shell: bash
+        run: |
+          ziti version
+          echo "resolved = ${{ steps.ziti.outputs.version }}"
