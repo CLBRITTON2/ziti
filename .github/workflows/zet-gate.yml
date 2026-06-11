@@ -1,20 +1,20 @@
 name: ZET Integration Gate
 
-  on:
-    workflow_dispatch:
-      inputs:
-        ziti_version:
-          description: "ziti release tag to test"
-          required: true
-        zet1_version:
-          description: "ziti-edge-tunnel release tag"
-          required: true
+on:
+  workflow_dispatch:
+    inputs:
+      ziti_version:
+        description: "ziti release tag to test"
+        required: true
+      zet1_version:
+        description: "ziti-edge-tunnel release tag"
+        required: true
 
-  jobs:
-    zet-integration-gate:
-      uses: CLBRITTON2/ziti-tunnel-sdk-c/.github/workflows/integration-tests.yml@integration-test-workflow
-      with:
-        ziti-version: ${{ inputs.ziti_version }}
-        label: ziti-release-gate
-        zet1-version: ${{ inputs.zet1_version }}
-        tests-repo: CLBRITTON2/ziti-tunnel-sdk-c
+jobs:
+  zet-integration-gate:
+    uses: CLBRITTON2/ziti-tunnel-sdk-c/.github/workflows/integration-tests.yml@integration-test-workflow
+    with:
+      ziti-version: ${{ inputs.ziti_version }}
+      label: ziti-release-gate
+      zet1-version: ${{ inputs.zet1_version }}
+      tests-repo: CLBRITTON2/ziti-tunnel-sdk-c
