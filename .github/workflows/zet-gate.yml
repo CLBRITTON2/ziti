@@ -1,20 +1,53 @@
-name: ZET Integration Gate
+name: ZET Gate (built ziti)
 
 on:
   workflow_dispatch:
     inputs:
-      ziti_version:
-        description: "ziti release tag to test"
-        required: true
       zet1_version:
         description: "ziti-edge-tunnel release tag"
         required: true
 
 jobs:
+  build-ziti:
+    name: Build ziti (${{ matrix.os }})
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            runner: ubuntu-latest
+          - os: darwin
+            runner: macos-15
+          - os: windows
+            runner: windows-2022
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install Ziti CI
+        uses: openziti/ziti-ci@v1
+
+      - name: Build ziti
+        shell: bash
+        run: |
+          $(go env GOPATH)/bin/ziti-ci generate-build-info common/version/info_generated.go version
+          go build -o build/ ./ziti
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ziti-bin-${{ matrix.os }}
+          path: build/
+
   zet-integration-gate:
+    needs: build-ziti
     uses: CLBRITTON2/ziti-tunnel-sdk-c/.github/workflows/integration-tests.yml@integration-test-workflow
     with:
-      ziti-version: ${{ inputs.ziti_version }}
-      label: ziti-release-gate
+      ziti-artifact: ziti-bin
+      label: ziti-artifact-gate
       zet1-version: ${{ inputs.zet1_version }}
       tests-repo: CLBRITTON2/ziti-tunnel-sdk-c
