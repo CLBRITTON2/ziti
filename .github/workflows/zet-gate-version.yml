@@ -8,7 +8,7 @@ on:
         required: false
         default: ""
       ziti_ref:
-        description: "Or build ziti from source at this branch/tag/commit"
+        description: "Build ziti from source at this branch/tag/commit"
         required: false
         default: ""
       zet1_version:
