@@ -1,0 +1,26 @@
+name: ZET Gate (version/ref)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ziti_version:
+        description: "ziti release to download; empty = stable"
+        required: false
+        default: ""
+      ziti_ref:
+        description: "ziti branch/tag/commit to build from source; overrides ziti_version"
+        required: false
+        default: ""
+      zet1_version:
+        description: "ziti-edge-tunnel release tag or 'latest'"
+        required: true
+
+jobs:
+  zet-integration-gate:
+    uses: CLBRITTON2/ziti-tunnel-sdk-c/.github/workflows/integration-tests.yml@integration-test-workflow
+    with:
+      ziti-version: ${{ inputs.ziti_version }}
+      ziti-ref: ${{ inputs.ziti_ref }}
+      label: ziti-release-gate
+      zet1-version: ${{ inputs.zet1_version }}
+      tests-repo: CLBRITTON2/ziti-tunnel-sdk-c
