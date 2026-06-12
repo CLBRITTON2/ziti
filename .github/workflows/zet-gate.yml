@@ -1,4 +1,4 @@
-name: ZET Gate
+name: ZET Gate (artifact)
 
 on:
   workflow_dispatch:
