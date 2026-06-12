@@ -1,4 +1,4 @@
-name: ZET Gate (built ziti)
+name: ZET Gate
 
 on:
   workflow_dispatch:
@@ -14,10 +14,13 @@ jobs:
       matrix:
         include:
           - os: linux
+            arch: amd64
             runner: ubuntu-latest
           - os: darwin
+            arch: arm64
             runner: macos-15
           - os: windows
+            arch: amd64
             runner: windows-2022
     runs-on: ${{ matrix.runner }}
     steps:
@@ -35,19 +38,20 @@ jobs:
       - name: Build ziti
         shell: bash
         run: |
+          mkdir -p "build/${{ matrix.arch }}/${{ matrix.os }}"
           $(go env GOPATH)/bin/ziti-ci generate-build-info common/version/info_generated.go version
-          go build -o build/ ./ziti
+          go build -o "build/${{ matrix.arch }}/${{ matrix.os }}/" ./ziti
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ziti-bin-${{ matrix.os }}
+          name: ${{ matrix.os }}-release-${{ github.run_id }}
           path: build/
 
   zet-integration-gate:
     needs: build-ziti
     uses: CLBRITTON2/ziti-tunnel-sdk-c/.github/workflows/integration-tests.yml@integration-test-workflow
     with:
-      ziti-artifact: ziti-bin
-      label: ziti-artifact-gate
+      ziti-artifact: release-${{ github.run_id }}
+      label: ziti-release-gate
       zet1-version: ${{ inputs.zet1_version }}
       tests-repo: CLBRITTON2/ziti-tunnel-sdk-c
