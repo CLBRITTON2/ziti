@@ -4,15 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       ziti_version:
-        description: "ziti release to download; empty = stable"
+        description: "Download this ziti release tag (blank = stable). Ignored when a ref is given below"
         required: false
         default: ""
       ziti_ref:
-        description: "ziti branch/tag/commit to build from source; overrides ziti_version"
+        description: "Or build ziti from source at this branch/tag/commit"
         required: false
         default: ""
       zet1_version:
-        description: "ziti-edge-tunnel release tag or 'latest'"
+        description: "ZET release tag to test with (e.g. v1.17.1) or 'latest'"
         required: true
 
 jobs:
