@@ -28,8 +28,9 @@ import (
 	"github.com/openziti/ziti/v2/ziti/util"
 
 	"github.com/michaelquigley/pfxlog"
-	"github.com/openziti/agent"
 	"github.com/openziti/sdk-golang/ziti"
+	"github.com/openziti/ziti/v2/common/agent"
+	"github.com/openziti/ziti/v2/common/agentlog"
 	"github.com/openziti/ziti/v2/common/version"
 	"github.com/openziti/ziti/v2/tunnel"
 	"github.com/openziti/ziti/v2/tunnel/dns"
@@ -127,6 +128,9 @@ func rootPostRun(cmd *cobra.Command, _ []string) {
 		// don't use the agent's shutdown handler. it calls os.Exit on SIGINT
 		// which interferes with the servicePoller shutdown
 		cleanup := false
+		if err := agent.RegisterLogLevelHandlers(agentlog.DefaultLogLevelCallbacks()); err != nil {
+			log.WithError(err).Error("failed to register agent log-level handlers")
+		}
 		err := agent.Listen(agent.Options{
 			Addr:            cliAgentAddr,
 			ShutdownCleanup: &cleanup,

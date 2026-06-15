@@ -231,6 +231,7 @@ message EdgeRouter {
   bool disabled = 15;
   repeated Interface interfaces = 16;
   map<string, CtrlChanListenerDetail> ctrlChanListeners = 17;
+  repeated string configs = 18;
 }
 
 message ReEnrollEdgeRouterCmd {
@@ -442,6 +443,7 @@ message Revocation {
   google.protobuf.Timestamp expiresAt = 2;
   map<string, TagValue> tags = 3;
   string type = 4;
+  google.protobuf.Timestamp issuedBefore = 5;
 }
 
 message DeleteRevocationsBatchCommand {
@@ -501,6 +503,7 @@ message TransitRouter {
   bool noTraversal = 9;
   bool disabled = 10;
   map<string, CtrlChanListenerDetail> ctrlChanListeners = 11;
+  repeated string configs = 12;
 }
 
 message CreateTransitRouterCmd {

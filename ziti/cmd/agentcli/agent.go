@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"slices"
 	"strings"
 	"time"
 
-	"github.com/openziti/agent"
 	"github.com/openziti/channel/v4"
-	"github.com/openziti/identity"
+	"github.com/openziti/ziti/v2/common/agent"
 	"github.com/openziti/ziti/v2/common/agentid"
 	"github.com/openziti/ziti/v2/common/pb/mgmt_pb"
 	"github.com/openziti/ziti/v2/controller"
@@ -129,6 +129,48 @@ type AgentOptions struct {
 	appAlias    string
 	appAddr     string
 	timeout     time.Duration
+
+	agentCaps   []string
+	appCaps     []string
+	capsFetched bool
+}
+
+// fetchCaps lazily fetches the target's capability lists via AppInfoV2 and
+// caches them for the lifetime of this AgentOptions. A server that predates
+// AppInfoV2 (or any fetch error) leaves the lists empty, which yields legacy
+// behavior.
+func (self *AgentOptions) fetchCaps() {
+	if self.capsFetched {
+		return
+	}
+	self.capsFetched = true
+	_ = self.MakeRequest(agent.AppInfoV2, nil, func(conn net.Conn) error {
+		resp, ok, err := agent.ReadAppInfoV2Response(conn)
+		if err != nil || !ok {
+			return nil
+		}
+		self.agentCaps = resp.AgentCapabilities
+		self.appCaps = resp.AppCapabilities
+		return nil
+	})
+}
+
+// HasAgentCapability reports whether the target advertises the agent capability
+// identified by the given bit (e.g. agent.CapabilityLoggingSlogLevels).
+func (self *AgentOptions) HasAgentCapability(bit int) bool {
+	self.fetchCaps()
+	name, ok := agent.AgentCapabilityName(bit)
+	if !ok {
+		return false
+	}
+	return slices.Contains(self.agentCaps, name)
+}
+
+// HasAppCapability reports whether the target advertises the named application
+// capability.
+func (self *AgentOptions) HasAppCapability(name string) bool {
+	self.fetchCaps()
+	return slices.Contains(self.appCaps, name)
 }
 
 func (self *AgentOptions) AddAgentOptions(cmd *cobra.Command) {
@@ -189,7 +231,7 @@ func (self *AgentOptions) GetProcess() (*agent.Process, error) {
 }
 
 func (self *AgentOptions) MakeChannelRequest(appId byte, f func(ch channel.Channel) error) error {
-	return self.MakeRequest(agent.CustomOpAsync, []byte{appId}, connToChannelMapper(f))
+	return self.MakeRequest(agent.CustomOpAsync, []byte{appId}, agent.ConnToChannel(f))
 }
 
 func (self *AgentOptions) MakeRequest(signal byte, params []byte, f func(c net.Conn) error) error {
@@ -262,26 +304,5 @@ func (self *AgentOptions) RunWithTimeout(f func() error) error {
 		return err
 	case <-time.After(self.timeout):
 		return errors.New("operation timed out")
-	}
-}
-
-func NewAgentChannel(conn net.Conn) (channel.Channel, error) {
-	options := channel.DefaultOptions()
-	options.ConnectTimeout = time.Second
-	dialer := channel.NewExistingConnDialer(&identity.TokenId{Token: "agent"}, conn, nil)
-	return channel.NewChannel("agent", dialer, nil, options)
-}
-
-func MakeAgentChannelRequest(addr string, appId byte, f func(ch channel.Channel) error) error {
-	return agent.MakeRequestF(addr, agent.CustomOpAsync, []byte{appId}, connToChannelMapper(f))
-}
-
-func connToChannelMapper(f func(ch channel.Channel) error) func(conn net.Conn) error {
-	return func(conn net.Conn) error {
-		ch, err := NewAgentChannel(conn)
-		if err != nil {
-			return err
-		}
-		return f(ch)
 	}
 }
