@@ -48,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        zet: [latest, v1.17.1]    
+        zet: [v.16.0, v1.17.1]    
     uses: CLBRITTON2/ziti-tunnel-sdk-c/.github/workflows/integration-tests.yml@integration-test-workflow
     with:
       ziti-artifact: release-${{ github.run_id }}
