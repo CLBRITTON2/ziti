@@ -45,9 +45,13 @@ jobs:
 
   zet-integration-gate:
     needs: build-ziti
+    strategy:
+      fail-fast: false
+      matrix:
+        zet: [v1.17.0, v1.17.1]    
     uses: CLBRITTON2/ziti-tunnel-sdk-c/.github/workflows/integration-tests.yml@integration-test-workflow
     with:
       ziti-artifact: release-${{ github.run_id }}
-      label: ziti-release-gate
-      zetA-version: v1.17.1
+      label: ziti-release-gate-${{ matrix.zet }}
+      zetA-version: ${{ matrix.zet }}
       tests-repo: CLBRITTON2/ziti-tunnel-sdk-c
